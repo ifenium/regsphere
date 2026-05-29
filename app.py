@@ -343,6 +343,36 @@ def inject_styles() -> None:
         }}
         @media (max-width: 900px) {{
             .rs-preview-grid {{ grid-template-columns: 1fr; }}
+            /* Once the two columns stack vertically the left card must NOT stay
+               pinned, or it floats over the results column as you scroll. */
+            [data-testid="stHorizontalBlock"] > [data-testid="stColumn"]:has(.st-key-setup) {{
+                position: static !important;
+                top: auto !important;
+            }}
+        }}
+
+        /* Phone layout: keep the fixed toolbar off the logo, give the page top
+           room to clear it, shrink the brand header, and let the matrix scroll. */
+        @media (max-width: 640px) {{
+            #rs-toolbar {{
+                top: 0.4rem; right: 0.5rem; gap: 0.3rem;
+                flex-wrap: wrap; justify-content: flex-end; max-width: 66vw;
+            }}
+            #rs-toolbar button {{
+                font-size: 0.68rem; padding: 0.26rem 0.55rem;
+                box-shadow: 1px 1px 0 var(--rs-ink);
+            }}
+            [data-testid="stMainBlockContainer"], .block-container {{
+                padding-top: 4rem !important;
+            }}
+            .rs-head {{ gap: 0.5rem; margin-bottom: 1rem; }}
+            .rs-head .rs-logo svg {{ max-width: 150px; }}
+            .rs-head .rs-tag {{
+                border-left: none; padding-left: 0;
+                font-size: 0.8rem; max-width: 100%;
+            }}
+            .rs-matrix {{ min-width: 420px; }}
+            .rs-matrix th, .rs-matrix td {{ padding: 0.45rem 0.5rem; font-size: 0.8rem; }}
         }}
 
         /* Status + alert surfaces: thin border + subtle depth */
@@ -415,6 +445,10 @@ def inject_styles() -> None:
             border-color: var(--rs-blue);
             color: #fff !important;
         }}
+
+        /* Matrix scroll wrapper: lets the table scroll sideways on narrow
+           screens instead of crushing the columns. */
+        .rs-matrix-wrap {{ overflow-x: auto; -webkit-overflow-scrolling: touch; }}
 
         /* Divergence matrix: collapsed grid so every line (incl. left) renders */
         .rs-matrix {{
@@ -945,10 +979,12 @@ def render_divergence_matrix(matrix: DivergenceMatrix) -> None:
         rows.append(f'<tr><td class="rs-theme">{label}</td>{"".join(cells)}</tr>')
 
     table = (
+        '<div class="rs-matrix-wrap">'
         '<table class="rs-matrix">'
         f'<tr><th class="rs-theme-head">Theme</th>{header_cells}</tr>'
         f'{"".join(rows)}'
         "</table>"
+        "</div>"
     )
     st.markdown(table, unsafe_allow_html=True)
 
