@@ -175,7 +175,7 @@ async def research_deep_dive(
     query: str,
     include_domains: list[str] | None = None,
     poll_interval: float = 3.0,
-    max_wait: float = 300.0,
+    max_wait: float = 480.0,
 ) -> ResearchResult:
     """Run a deep research investigation using Linkup's research endpoint.
 
@@ -187,7 +187,9 @@ async def research_deep_dive(
         query: The research question to investigate.
         include_domains: Optional domain allowlist to restrict sources.
         poll_interval: Seconds between status checks (default 3s).
-        max_wait: Maximum seconds to wait for completion (default 300s / 5 min).
+        max_wait: Maximum seconds to wait for completion (default 480s / 8 min).
+            Investigate-mode research on a restricted domain allowlist routinely
+            runs ~5-6 minutes, so the budget must stay well above that.
 
     Returns:
         ResearchResult with the answer and supporting sources.

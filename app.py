@@ -1213,7 +1213,11 @@ def render_deep_dive_result(result: ResearchResult) -> None:
         return
 
     if result.status == "timeout":
-        st.warning("Deep dive timed out. Try again later.")
+        st.warning(
+            "Deep dive is still running after 8 minutes. The investigation can "
+            "occasionally take longer than that under load. Click Deep Dive again "
+            "to retry."
+        )
         return
 
     if not result.answer:
@@ -1302,8 +1306,8 @@ def render_deep_dive_panel(results: list[JurisdictionResult]) -> None:
     if requested:
         jname = JURISDICTIONS.get(requested, {}).get("name", requested)
         with st.spinner(
-            f"Running deep dive for {jname}. Linkup's research endpoint can take "
-            "a few minutes; keep this tab open."
+            f"Running deep dive for {jname}. Linkup's research endpoint typically "
+            "takes 5 to 6 minutes for a full investigation; keep this tab open."
         ):
             feature_key = st.session_state.get("feature_key", "resume_screening")
             st.session_state[f"deep_dive_result_{requested}"] = asyncio.run(
