@@ -287,17 +287,24 @@ def inject_styles() -> None:
             background: var(--rs-blue) !important;
             color: #fff !important;
             border-color: var(--rs-blue) !important;
+            opacity: 1 !important;
         }}
         [data-testid="stButtonGroup"] button:nth-of-type(1) *,
         [data-testid="stButtonGroup"] > div:nth-of-type(1) button * {{
             color: #fff !important;
         }}
+        /* :hover/:focus included so the unselected segment is never dimmed or
+           tinted away from the exact #f4a261 (Streamlit lowers opacity on the
+           inactive option, which made the orange look washed out). */
         [data-testid="stButtonGroup"] button:nth-of-type(2),
+        [data-testid="stButtonGroup"] button:nth-of-type(2):hover,
+        [data-testid="stButtonGroup"] button:nth-of-type(2):focus,
         [data-testid="stButtonGroup"] > div:nth-of-type(2) button {{
             background: #f4a261 !important;
             color: #5a2e0c !important;
             border-color: #d98a3f !important;
             font-weight: 700 !important;
+            opacity: 1 !important;
         }}
         [data-testid="stButtonGroup"] button:nth-of-type(2) *,
         [data-testid="stButtonGroup"] > div:nth-of-type(2) button * {{
@@ -653,14 +660,14 @@ def inject_chrome(export_md: str = "") -> None:
               bar.id = 'rs-toolbar';
               doc.body.appendChild(bar);
             }}
-            if (!doc.getElementById('rs-print-btn')) {{
-              const b = doc.createElement('button');
-              b.id = 'rs-print-btn';
-              b.textContent = 'Print page';
-              b.onclick = function() {{ win.print(); }};
-              bar.appendChild(b);
-            }}
             if (md) {{
+              if (!doc.getElementById('rs-print-btn')) {{
+                const b = doc.createElement('button');
+                b.id = 'rs-print-btn';
+                b.textContent = 'Print page';
+                b.onclick = function() {{ win.print(); }};
+                bar.appendChild(b);
+              }}
               let c = doc.getElementById('rs-copy-btn');
               if (!c) {{
                 c = doc.createElement('button');
@@ -689,6 +696,13 @@ def inject_chrome(export_md: str = "") -> None:
                 doc.body.appendChild(a); a.click(); a.remove();
                 win.URL.revokeObjectURL(url);
               }};
+            }} else {{
+              // No results yet: keep the toolbar empty. Print / Copy / Download
+              // only appear once an analysis has completed and results exist.
+              ['rs-print-btn', 'rs-copy-btn', 'rs-dl-btn'].forEach(function(id) {{
+                const e = doc.getElementById(id);
+                if (e) {{ e.remove(); }}
+              }});
             }}
             function attach() {{
               const head = doc.querySelector('.rs-head');
