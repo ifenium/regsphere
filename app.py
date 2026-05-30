@@ -196,7 +196,9 @@ def inject_styles() -> None:
             position: fixed; left: 0; right: 0; bottom: 0; height: 72px;
             background: linear-gradient(to top, rgba(0, 111, 172, 0.18), rgba(0, 111, 172, 0));
             pointer-events: none; z-index: 999;
+            opacity: 1; transition: opacity 0.25s ease;
         }}
+        .rs-fade.rs-fade-hidden {{ opacity: 0; }}
         .rs-fade-chev {{
             text-align: center; color: var(--rs-blue);
             font-size: 1.25rem; line-height: 72px;
@@ -661,8 +663,30 @@ def inject_chrome(export_md: str = "") -> None:
               }}
               return false;
             }}
+            function bindFade() {{
+              // Hide the bottom scroll-cue fade once the page is fully scrolled.
+              // The handler re-queries .rs-fade each time so it survives reruns
+              // (Streamlit replaces the node); listeners are bound only once.
+              if (!win.__rsFadeUpdate) {{
+                win.__rsFadeUpdate = function() {{
+                  const f = doc.querySelector('.rs-fade');
+                  if (!f) return;
+                  const el = doc.scrollingElement || doc.documentElement;
+                  const atBottom =
+                    el.scrollHeight - (win.scrollY + win.innerHeight) <= 4;
+                  f.classList.toggle('rs-fade-hidden', atBottom);
+                }};
+                win.addEventListener('scroll', win.__rsFadeUpdate, {{ passive: true }});
+                win.addEventListener('resize', win.__rsFadeUpdate, {{ passive: true }});
+              }}
+              win.__rsFadeUpdate();
+              return !!doc.querySelector('.rs-fade');
+            }}
             let tries = 0;
-            (function go() {{ if (!attach() && tries++ < 10) {{ setTimeout(go, 200); }} }})();
+            (function go() {{
+              const ok = attach() && bindFade();
+              if (!ok && tries++ < 10) {{ setTimeout(go, 200); }}
+            }})();
           }} catch (err) {{ /* same-origin guard; ignore */ }}
         }})();
         </script>
@@ -866,7 +890,7 @@ def render_preview(selected_jurisdictions: list[str]) -> None:
     st.markdown(
         '<div class="rs-preview-foot">Each jurisdiction shows its framework '
         "status, key obligations with citations, and where it diverges from the "
-        'others.</div><div class="rs-scroll-cue">&#8595;</div>',
+        "others.</div>",
         unsafe_allow_html=True,
     )
 
