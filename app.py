@@ -742,9 +742,43 @@ def inject_chrome(export_md: str = "") -> None:
               win.__rsFadeUpdate();
               return !!doc.querySelector('.rs-fade');
             }}
+            function styleSegments() {{
+              // Colour the Feature-input segments directly with inline
+              // !important styles (beats every Streamlit rule) and match by
+              // button text so it never depends on DOM order or class names.
+              // "Preset archetypes" -> blue/white; "Custom description" ->
+              // permanent #f4a261 with black text, in every state.
+              const btns = doc.querySelectorAll('[data-testid="stButtonGroup"] button');
+              btns.forEach(function(b) {{
+                const t = (b.textContent || '').trim().toLowerCase();
+                let bg = null, fg = null, bd = null;
+                if (t === 'custom description') {{ bg = '#f4a261'; fg = '#000000'; bd = '#d98a3f'; }}
+                else if (t === 'preset archetypes') {{ bg = '#006FAC'; fg = '#ffffff'; bd = '#006FAC'; }}
+                if (bg) {{
+                  b.style.setProperty('background', bg, 'important');
+                  b.style.setProperty('border-color', bd, 'important');
+                  b.style.setProperty('color', fg, 'important');
+                  b.style.setProperty('opacity', '1', 'important');
+                  if (t === 'custom description') {{
+                    b.style.setProperty('font-weight', '700', 'important');
+                  }}
+                  b.querySelectorAll('*').forEach(function(c) {{
+                    c.style.setProperty('color', fg, 'important');
+                  }});
+                }}
+              }});
+              // Re-apply after Streamlit re-renders the buttons (e.g. on toggle).
+              // Observe only childList/subtree (not attributes) to avoid looping
+              // on our own inline-style writes.
+              if (!win.__rsSegObs && win.MutationObserver) {{
+                win.__rsSegObs = new win.MutationObserver(function() {{ styleSegments(); }});
+                win.__rsSegObs.observe(doc.body, {{ childList: true, subtree: true }});
+              }}
+              return btns.length > 0;
+            }}
             let tries = 0;
             (function go() {{
-              const ok = attach() && bindFade();
+              const ok = attach() && bindFade() && styleSegments();
               if (!ok && tries++ < 10) {{ setTimeout(go, 200); }}
             }})();
           }} catch (err) {{ /* same-origin guard; ignore */ }}
