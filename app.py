@@ -1348,14 +1348,16 @@ def main() -> None:
         )
         st.stop()
 
+    # Brand header spans the full width at the top so the logo sits top-left on
+    # every layout. (Inside the right column it stacked below Setup on mobile.)
+    render_header()
+
     left, right = st.columns([1, 2.2], gap="large")
 
     with left:
         cfg = render_config_panel()
 
     with right:
-        render_header()
-
         # Trigger a run when Analyze is pressed
         if cfg["run_button"] and cfg["selected_jurisdictions"]:
             feature_mode = cfg["feature_mode"]
