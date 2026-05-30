@@ -279,13 +279,25 @@ def inject_styles() -> None:
             background: #fff;
             color: var(--rs-ink);
         }}
-        /* "Custom description" (the second segment) carries the Print-page
-           colours (pastel orange + dark text) so it stands out, in every state. */
+        /* Fixed per-option colours, applied in EVERY state: "Preset archetypes"
+           (1st) stays blue even when Custom is selected; "Custom description"
+           (2nd) carries the Print-page orange and its bold (700) weight. */
+        [data-testid="stButtonGroup"] button:nth-of-type(1),
+        [data-testid="stButtonGroup"] > div:nth-of-type(1) button {{
+            background: var(--rs-blue) !important;
+            color: #fff !important;
+            border-color: var(--rs-blue) !important;
+        }}
+        [data-testid="stButtonGroup"] button:nth-of-type(1) *,
+        [data-testid="stButtonGroup"] > div:nth-of-type(1) button * {{
+            color: #fff !important;
+        }}
         [data-testid="stButtonGroup"] button:nth-of-type(2),
         [data-testid="stButtonGroup"] > div:nth-of-type(2) button {{
             background: #f4a261 !important;
             color: #5a2e0c !important;
             border-color: #d98a3f !important;
+            font-weight: 700 !important;
         }}
         [data-testid="stButtonGroup"] button:nth-of-type(2) *,
         [data-testid="stButtonGroup"] > div:nth-of-type(2) button * {{
@@ -560,7 +572,7 @@ def inject_styles() -> None:
         /* Feature-description note: warm yellow in the Print-button style
            (solid warm fill, amber border, hard offset shadow). */
         .rs-note.is-feature {{
-            background: #ffe08a;
+            background: rgba(255, 255, 18, 0.1);
             border: 1px solid #e0b020;
             border-left: 4px solid #e0a52e;
             color: #5a4310;
