@@ -354,6 +354,9 @@ def inject_styles() -> None:
         /* Phone layout: keep the fixed toolbar off the logo, give the page top
            room to clear it, shrink the brand header, and let the matrix scroll. */
         @media (max-width: 640px) {{
+            /* Hide the scroll mini-logo entirely on phones: it otherwise
+               re-enters mid-scroll and overlaps the top-left content. */
+            #rs-minilogo {{ display: none !important; }}
             #rs-toolbar {{
                 top: 0.4rem; right: 0.5rem; gap: 0.3rem;
                 flex-wrap: wrap; justify-content: flex-end; max-width: 66vw;
