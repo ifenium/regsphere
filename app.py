@@ -293,22 +293,24 @@ def inject_styles() -> None:
         [data-testid="stButtonGroup"] > div:nth-of-type(1) button * {{
             color: #fff !important;
         }}
-        /* :hover/:focus included so the unselected segment is never dimmed or
-           tinted away from the exact #f4a261 (Streamlit lowers opacity on the
-           inactive option, which made the orange look washed out). */
+        /* "Custom description" (2nd segment): permanently #f4a261 with black
+           text in EVERY state (default, hover, focus, selected) — never dimmed
+           and never the blue/white active treatment. */
         [data-testid="stButtonGroup"] button:nth-of-type(2),
         [data-testid="stButtonGroup"] button:nth-of-type(2):hover,
         [data-testid="stButtonGroup"] button:nth-of-type(2):focus,
+        [data-testid="stButtonGroup"] button:nth-of-type(2)[kind="segmented_controlActive"],
         [data-testid="stButtonGroup"] > div:nth-of-type(2) button {{
             background: #f4a261 !important;
-            color: #5a2e0c !important;
+            color: var(--rs-ink) !important;
             border-color: #d98a3f !important;
             font-weight: 700 !important;
             opacity: 1 !important;
         }}
         [data-testid="stButtonGroup"] button:nth-of-type(2) *,
+        [data-testid="stButtonGroup"] button:nth-of-type(2)[kind="segmented_controlActive"] *,
         [data-testid="stButtonGroup"] > div:nth-of-type(2) button * {{
-            color: #5a2e0c !important;
+            color: var(--rs-ink) !important;
         }}
 
         /* Feature input / Feature archetype labels match the Jurisdictions title */
