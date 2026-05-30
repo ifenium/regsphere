@@ -1296,24 +1296,107 @@ def results_to_markdown(
     return "\n".join(lines)
 
 
+def render_deep_dive_loader(jname: str) -> None:
+    """Animated loading card shown while a deep dive is in flight."""
+    st.markdown(
+        f"""
+        <div class="rs-dd-loader">
+          <div class="rs-dd-spinner"></div>
+          <div>
+            <div class="rs-dd-loader-title">Running deep dive: {html.escape(jname)}</div>
+            <div class="rs-dd-loader-sub">Investigating regulations via Linkup's
+              research endpoint. This typically takes 5 to 6 minutes; keep this
+              tab open.</div>
+            <div class="rs-dd-bar"><span></span></div>
+          </div>
+        </div>
+        <style>
+          @keyframes rs-dd-spin {{ to {{ transform: rotate(360deg); }} }}
+          @keyframes rs-dd-slide {{
+            0% {{ left: -40%; }} 100% {{ left: 100%; }}
+          }}
+          .rs-dd-loader {{
+            display: flex; align-items: center; gap: 16px;
+            padding: 0.7rem 0.95rem; margin: 10px 0;
+            border: 1px solid var(--rs-blue);
+            border-left: 4px solid var(--rs-blue);
+            border-radius: 8px;
+            box-shadow: var(--rs-depth-sm);
+            background: #dceaf6;
+          }}
+          .rs-dd-spinner {{
+            width: 32px; height: 32px; flex: 0 0 auto;
+            border: 3px solid #b7d4ea; border-top-color: var(--rs-blue);
+            border-radius: 50%; animation: rs-dd-spin 0.9s linear infinite;
+          }}
+          .rs-dd-loader-title {{ font-weight: 800; color: var(--rs-blue-dark); }}
+          .rs-dd-loader-sub {{
+            font-size: 0.83rem; color: #103a52; font-weight: 500; margin-top: 2px;
+          }}
+          .rs-dd-bar {{
+            position: relative; height: 4px; width: 100%; margin-top: 10px;
+            background: #b7d4ea; border-radius: 4px; overflow: hidden;
+          }}
+          .rs-dd-bar span {{
+            position: absolute; top: 0; height: 100%; width: 40%;
+            background: var(--rs-blue); border-radius: 4px;
+            animation: rs-dd-slide 1.4s ease-in-out infinite;
+          }}
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+@st.fragment
 def render_deep_dive_panel(results: list[JurisdictionResult]) -> None:
-    """Run a requested deep dive and render completed ones, below the tabs.
+    """Deep dive trigger row, loader, and results, isolated in a fragment.
 
-    Kept out of the tabs deliberately: Streamlit resets to the first tab on
-    each rerun, so a spinner or result rendered inside a tab would be hidden.
+    The trigger buttons live INSIDE the fragment on purpose: a widget click in
+    a fragment reruns only the fragment, so the 5-6 minute blocking research
+    call never re-executes the main results page. That is what removes the
+    duplicate Detailed Results that used to appear while the script was frozen
+    on the blocking call. Kept below the tabs because Streamlit resets to the
+    first tab on each rerun, hiding anything rendered inside a tab.
     """
-    requested = st.session_state.pop("deep_dive_request", None)
-    if requested:
-        jname = JURISDICTIONS.get(requested, {}).get("name", requested)
-        with st.spinner(
-            f"Running deep dive for {jname}. Linkup's research endpoint typically "
-            "takes 5 to 6 minutes for a full investigation; keep this tab open."
-        ):
-            feature_key = st.session_state.get("feature_key", "resume_screening")
-            st.session_state[f"deep_dive_result_{requested}"] = asyncio.run(
-                run_deep_dive(requested, feature_key)
-            )
+    running = st.session_state.get("deep_dive_running")
 
+    st.markdown(
+        '<div class="rs-section-label">Deep dive (Linkup research)</div>',
+        unsafe_allow_html=True,
+    )
+    cols = st.columns(len(results))
+    clicked = None
+    for col, r in zip(cols, results):
+        with col:
+            jname = JURISDICTIONS.get(r.jurisdiction, {}).get("name", r.jurisdiction)
+            if st.button(
+                f"Deep dive: {r.jurisdiction}",
+                key=f"deep_dive_{r.jurisdiction}",
+                use_container_width=True,
+                disabled=bool(running),
+                help=f"Thorough investigation of {jname} via Linkup's research "
+                "endpoint (typically 5 to 6 minutes)",
+            ):
+                clicked = r.jurisdiction
+    if clicked:
+        st.session_state["deep_dive_running"] = clicked
+        st.rerun(scope="fragment")
+
+    # A run is in progress: show the loader and execute it. Because this is a
+    # fragment rerun, the blocking call below is scoped to the fragment only.
+    running = st.session_state.get("deep_dive_running")
+    if running:
+        jname = JURISDICTIONS.get(running, {}).get("name", running)
+        render_deep_dive_loader(jname)
+        feature_key = st.session_state.get("feature_key", "resume_screening")
+        st.session_state[f"deep_dive_result_{running}"] = asyncio.run(
+            run_deep_dive(running, feature_key)
+        )
+        st.session_state.pop("deep_dive_running", None)
+        st.rerun(scope="fragment")
+
+    # Render any completed deep dives so they persist across reruns.
     shown_any = False
     for r in results:
         key = f"deep_dive_result_{r.jurisdiction}"
@@ -1373,17 +1456,9 @@ def render_detailed_results(
                     unsafe_allow_html=True,
                 )
 
-            # Deep dive trigger. The run and result render below the tabs (see
-            # render_deep_dive_panel) so they stay visible after the rerun.
-            jname = JURISDICTIONS.get(result.jurisdiction, {}).get(
-                "name", result.jurisdiction
-            )
-            if st.button(
-                f"Deep dive into {jname} regulations",
-                key=f"deep_dive_{result.jurisdiction}",
-                help="Thorough investigation via Linkup's research endpoint (can take a few minutes)",
-            ):
-                st.session_state["deep_dive_request"] = result.jurisdiction
+            # Deep dive triggers live in the fragment below the tabs (see
+            # render_deep_dive_panel), not here, so clicks rerun only that
+            # fragment and the loader/result stay visible across tab resets.
 
             # Empty state
             if not result.obligations:
