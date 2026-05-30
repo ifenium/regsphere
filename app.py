@@ -121,6 +121,12 @@ def inject_styles() -> None:
 
         .stApp {{ background: var(--rs-bg); color: var(--rs-ink); }}
 
+        /* Trim Streamlit's very tall default bottom page padding (it leaves a
+           large empty gap below the content, most visible before a run). */
+        [data-testid="stMainBlockContainer"], .block-container {{
+            padding-bottom: 2rem !important;
+        }}
+
         /* Remove Streamlit's entire top header bar. It is otherwise an empty
            strip that takes space AND overlays (with a high z-index) the
            top-left mini-logo and the top-right Print button, hiding them.
@@ -249,6 +255,9 @@ def inject_styles() -> None:
             background: #fff !important;
         }}
         .st-key-setup [data-testid="stVerticalBlock"] {{ gap: 0.55rem; }}
+        /* Tighter dividers inside Setup so sections sit closer (some space,
+           not a large gap) around the Jurisdictions and Analyze separators. */
+        .st-key-setup hr {{ margin: 0.15rem 0 !important; }}
 
         /* Feature-input segmented control: full width, options stretch equally */
         [data-testid="stButtonGroup"] {{ width: 100%; }}
@@ -534,6 +543,15 @@ def inject_styles() -> None:
             box-shadow: var(--rs-depth-sm);
         }}
         .rs-note .rs-note-ico {{ color: var(--rs-blue); font-weight: 800; margin-right: 0.45rem; }}
+        /* Feature-description note: warm yellow in the Print-button style
+           (solid warm fill, amber border, hard offset shadow). */
+        .rs-note.is-feature {{
+            background: #ffe08a;
+            border: 1px solid #e0b020;
+            border-left: 4px solid #e0a52e;
+            color: #5a4310;
+        }}
+        .rs-note.is-feature .rs-note-ico {{ color: #8a5a12; }}
 
         /* Quiet section label */
         .rs-section-label {{
@@ -753,7 +771,7 @@ def render_config_panel() -> dict:
                 format_func=lambda x: feature_options[x],
             )
             st.markdown(
-                '<div class="rs-note"><span class="rs-note-ico">&#9432;</span>'
+                '<div class="rs-note is-feature"><span class="rs-note-ico">&#9432;</span>'
                 f'{html.escape(FEATURE_ARCHETYPES[selected_feature]["canonical_capability"])}'
                 "</div>",
                 unsafe_allow_html=True,
@@ -788,7 +806,7 @@ def render_config_panel() -> dict:
                 ):
                     st.markdown(
                         '<div class="rs-label">Optimized prompt (used for analysis)</div>'
-                        '<div class="rs-note"><span class="rs-note-ico">&#9432;</span>'
+                        '<div class="rs-note is-feature"><span class="rs-note-ico">&#9432;</span>'
                         f'{html.escape(st.session_state["custom_optimized"])}</div>',
                         unsafe_allow_html=True,
                     )
