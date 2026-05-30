@@ -121,9 +121,11 @@ def inject_styles() -> None:
 
         .stApp {{ background: var(--rs-bg); color: var(--rs-ink); }}
 
-        /* Trim Streamlit's very tall default bottom page padding (it leaves a
-           large empty gap below the content, most visible before a run). */
+        /* Trim Streamlit's very tall default top/bottom page padding so the
+           logo sits near the top (level with the Print button) instead of after
+           a large gap, and there is no big empty space below the content. */
         [data-testid="stMainBlockContainer"], .block-container {{
+            padding-top: 2.5rem !important;
             padding-bottom: 2rem !important;
         }}
 
@@ -276,6 +278,18 @@ def inject_styles() -> None:
         [data-testid="stButtonGroup"] button[kind="segmented_control"] {{
             background: #fff;
             color: var(--rs-ink);
+        }}
+        /* "Custom description" (the second segment) carries the Print-page
+           colours (pastel orange + dark text) so it stands out, in every state. */
+        [data-testid="stButtonGroup"] button:nth-of-type(2),
+        [data-testid="stButtonGroup"] > div:nth-of-type(2) button {{
+            background: #f4a261 !important;
+            color: #5a2e0c !important;
+            border-color: #d98a3f !important;
+        }}
+        [data-testid="stButtonGroup"] button:nth-of-type(2) *,
+        [data-testid="stButtonGroup"] > div:nth-of-type(2) button * {{
+            color: #5a2e0c !important;
         }}
 
         /* Feature input / Feature archetype labels match the Jurisdictions title */
